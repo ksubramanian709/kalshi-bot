@@ -1,0 +1,84 @@
+timestamp,ticker,action,reason,yes_price,days_to_close,market_title
+2026-03-24T04:21:47.203297Z,KXNBAGAME-26MAR25MIACLE-CLE,buy,"66% implied, closes in 15d",66,15,Miami at Cleveland Winner?
+2026-03-24T04:21:47.203728Z,KXNBAGAME-26MAR25BKNGSW-GSW,buy,"87% implied, closes in 15d",87,15,Brooklyn at Golden State Winner?
+2026-03-24T04:21:47.203826Z,KXNBAGAME-26MAR25SASMEM-SAS,buy,"92% implied, closes in 15d",92,15,San Antonio at Memphis Winner?
+2026-03-24T04:21:47.203910Z,KXNBAGAME-26MAR25MILPOR-POR,buy,"81% implied, closes in 15d",81,15,Milwaukee at Portland Winner?
+2026-03-24T04:21:47.203989Z,KXNBAGAME-26MAR25OKCBOS-OKC,buy,"65% implied, closes in 15d",65,15,Oklahoma City at Boston Winner?
+2026-03-24T04:21:47.204064Z,KXNBAGAME-26MAR25DALDEN-DEN,buy,"88% implied, closes in 15d",88,15,Dallas at Denver Winner?
+2026-03-24T04:21:47.204140Z,KXNBAGAME-26MAR25WASUTA-UTA,buy,"63% implied, closes in 15d",63,15,Washington at Utah Winner?
+2026-03-24T04:21:47.204212Z,KXNBAGAME-26MAR25CHIPHI-PHI,buy,"63% implied, closes in 15d",63,15,Chicago at Philadelphia Winner?
+2026-03-24T04:21:47.204287Z,KXNBAGAME-26MAR25LALIND-LAL,buy,"90% implied, closes in 15d",90,15,Los Angeles L at Indiana Winner?
+2026-03-24T04:21:47.204357Z,KXNBAGAME-26MAR25ATLDET-DET,buy,"63% implied, closes in 15d",63,15,Atlanta at Detroit Winner?
+2026-03-24T04:21:47.204427Z,KXNBAGAME-26MAR24DENPHX-DEN,buy,"67% implied, closes in 14d",67,14,Denver at Phoenix Winner?
+2026-03-24T04:21:47.204616Z,KXNBAGAME-26MAR24ORLCLE-CLE,buy,"79% implied, closes in 14d",79,14,Orlando at Cleveland Winner?
+2026-03-24T04:21:47.204765Z,KXNBAGAME-26MAR24NOPNYK-NYK,buy,"78% implied, closes in 14d",78,14,New Orleans at New York Winner?
+2026-03-24T04:21:47.204901Z,KXNBAGAME-26MAR24SACCHA-CHA,buy,"92% implied, closes in 14d",92,14,Sacramento at Charlotte Winner?
+2026-03-24T04:21:47.205064Z,KXNBAGAME-26MAR23GSWDAL-GSW,buy,"88% implied, closes in 13d",88,13,Golden State at Dallas Winner?
+2026-03-24T04:21:47.205271Z,KXUCLGAME-26APR08BARATM-BAR,buy,"66% implied, closes in 29d",66,29,Barcelona vs Atletico Winner?
+2026-03-24T04:21:47.205435Z,KXMVESPORTSMULTIGAMEEXTENDED-S20267A0510EFD42-031270838D3,buy,"94% implied, closes in 14d",94,14,"yes Coby White: 2+,yes Charlotte,yes Jalen Brunson: 20+,yes Brandon Miller: 10+,yes LaMelo Ball: 10+"
+2026-03-24T04:21:47.206190Z,KXMVESPORTSMULTIGAMEEXTENDED-S202627078119E84-8659BBAE7BA,buy,"94% implied, closes in 14d",94,14,"yes Coby White: 2+,yes Charlotte,yes Brandon Miller: 10+,yes LaMelo Ball: 10+,yes DeMar DeRozan: 10+"
+2026-03-24T04:21:47.206347Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026939CFC8E3C6-C2E161EA4DF,buy,"62% implied, closes in 16d",62,16,"yes Arizona,yes Purdue,yes Michigan wins by over 4.5 Points"
+2026-03-24T04:21:47.206485Z,KXMVECROSSCATEGORY-S2026CF167E2D450-09BB1D502D8,buy,"62% implied, closes in 14d",62,14,"yes Denver,yes Charlotte,yes Detroit"
+2026-03-24T04:21:47.207870Z,KXMVECROSSCATEGORY-S2026FA6631E4AEC-A0AE20C524E,buy,"72% implied, closes in 14d",72,14,"yes Cleveland,yes Charlotte wins by over 2.5 Points,yes New Mexico,yes NYI Islanders,no Seattle wins"
+2026-03-24T04:21:47.208836Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026C8D0BBAF571-7F3CFF27814,buy,"84% implied, closes in 14d",84,14,"yes OG Anunoby: 1+,yes Cleveland,yes LaMelo Ball: 20+"
+2026-03-24T04:22:32.622979Z,KXNBAGAME-26MAR25MIACLE-CLE,buy,"66% implied, closes in 15d",66,15,Miami at Cleveland Winner?
+2026-03-24T04:22:32.623560Z,KXNBAGAME-26MAR25BKNGSW-GSW,buy,"87% implied, closes in 15d",87,15,Brooklyn at Golden State Winner?
+2026-03-24T04:22:32.623724Z,KXNBAGAME-26MAR25SASMEM-SAS,buy,"92% implied, closes in 15d",92,15,San Antonio at Memphis Winner?
+2026-03-24T04:22:32.623860Z,KXNBAGAME-26MAR25MILPOR-POR,buy,"81% implied, closes in 15d",81,15,Milwaukee at Portland Winner?
+2026-03-24T04:22:32.624007Z,KXNBAGAME-26MAR25OKCBOS-OKC,buy,"65% implied, closes in 15d",65,15,Oklahoma City at Boston Winner?
+2026-03-24T04:22:32.624130Z,KXNBAGAME-26MAR25DALDEN-DEN,buy,"88% implied, closes in 15d",88,15,Dallas at Denver Winner?
+2026-03-24T04:22:32.624262Z,KXNBAGAME-26MAR25WASUTA-UTA,buy,"63% implied, closes in 15d",63,15,Washington at Utah Winner?
+2026-03-24T04:22:32.624377Z,KXNBAGAME-26MAR25CHIPHI-PHI,buy,"63% implied, closes in 15d",63,15,Chicago at Philadelphia Winner?
+2026-03-24T04:22:32.624487Z,KXNBAGAME-26MAR25LALIND-LAL,buy,"90% implied, closes in 15d",90,15,Los Angeles L at Indiana Winner?
+2026-03-24T04:22:32.624600Z,KXNBAGAME-26MAR25ATLDET-DET,buy,"63% implied, closes in 15d",63,15,Atlanta at Detroit Winner?
+2026-03-24T04:22:32.624794Z,KXNBAGAME-26MAR24DENPHX-DEN,buy,"67% implied, closes in 14d",67,14,Denver at Phoenix Winner?
+2026-03-24T04:22:32.624897Z,KXNBAGAME-26MAR24ORLCLE-CLE,buy,"79% implied, closes in 14d",79,14,Orlando at Cleveland Winner?
+2026-03-24T04:22:32.625047Z,KXNBAGAME-26MAR24NOPNYK-NYK,buy,"78% implied, closes in 14d",78,14,New Orleans at New York Winner?
+2026-03-24T04:22:32.625154Z,KXNBAGAME-26MAR24SACCHA-CHA,buy,"92% implied, closes in 14d",92,14,Sacramento at Charlotte Winner?
+2026-03-24T04:22:32.625262Z,KXNBAGAME-26MAR23GSWDAL-GSW,buy,"95% implied, closes in 13d",95,13,Golden State at Dallas Winner?
+2026-03-24T04:22:32.625401Z,KXUCLGAME-26APR08BARATM-BAR,buy,"66% implied, closes in 29d",66,29,Barcelona vs Atletico Winner?
+2026-03-24T04:22:32.625593Z,KXMVECROSSCATEGORY-S2026C798DA36ABC-4466C0D3BE5,buy,"75% implied, closes in 14d",75,14,"yes Cleveland,yes Charlotte,yes Jalen Brunson: 20+,yes Brandon Miller: 15+,yes Coby White: 10+,yes L"
+2026-03-24T04:22:32.625760Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026C5BF0709A01-052D702F02B,buy,"72% implied, closes in 14d",72,14,"yes Cleveland,yes Charlotte wins by over 2.5 Points,yes New Mexico,no Chicago wins by over 2.5 goals"
+2026-03-24T04:22:32.625888Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026D5AA3FA7CF4-DA14E8BA60B,buy,"61% implied, closes in 16d",61,16,"yes Houston,yes Arizona wins by over 2.5 Points,yes Purdue wins by over 1.5 Points,no Duke wins by o"
+2026-03-24T04:22:32.626007Z,KXMVESPORTSMULTIGAMEEXTENDED-S20267DAAC739DA7-0F4DB73D391,buy,"74% implied, closes in 14d",74,14,"yes New York,yes Charlotte,yes Trey Murphy III: 15+,yes Karl-Anthony Towns: 15+,yes Brandon Miller: "
+2026-03-24T04:22:32.626110Z,KXMVESPORTSMULTIGAMEEXTENDED-S202691BFA6BAC2C-6316CE86E03,buy,"94% implied, closes in 14d",94,14,"yes Coby White: 2+,yes Charlotte,yes Zion Williamson: 15+,yes Karl-Anthony Towns: 15+,yes Brandon Mi"
+2026-03-24T04:22:32.626214Z,KXMVECROSSCATEGORY-S202604961D5F321-109FDFDF4AD,buy,"75% implied, closes in 14d",75,14,"yes Cleveland,yes Charlotte,yes Brandon Miller: 15+,yes Coby White: 10+,yes LaMelo Ball: 10+"
+2026-03-24T04:22:32.626332Z,KXMVESPORTSMULTIGAMEEXTENDED-S20262CBD821F3D3-83C1D8B142B,buy,"80% implied, closes in 14d",80,14,"yes Brandon Miller: 2+,yes LaMelo Ball: 2+,yes Miles Bridges: 2+,yes Moussa Diabaté: 6+,yes Purdue F"
+2026-03-24T04:22:32.626496Z,KXMVECROSSCATEGORY-S2026FAFE442BCC3-D963ABB981A,buy,"86% implied, closes in 14d",86,14,"yes New Mexico,yes Auburn,yes UConn"
+2026-03-24T04:22:32.626598Z,KXMVECROSSCATEGORY-S2026786227AB9D8-A8110EE8197,buy,"75% implied, closes in 14d",75,14,"yes Cleveland,yes Charlotte,yes Brandon Miller: 15+,yes Coby White: 10+"
+2026-03-24T04:22:32.626713Z,KXMVECROSSCATEGORY-S20260E0967ECDDF-48F05DFAD24,buy,"67% implied, closes in 13d",67,13,"yes Portland,yes Golden State,yes Los Angeles C,yes Denver,no New York wins by over 25.5 Points,yes "
+2026-03-24T04:22:32.626809Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026E984B179DBF-86E604E681A,buy,"80% implied, closes in 14d",80,14,"yes New York,yes Trey Murphy III: 15+,yes Karl-Anthony Towns: 15+,yes Brandon Miller: 10+,yes LaMelo"
+2026-03-24T04:22:32.627047Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026AD87954271D-FC5AD4E31A9,buy,"60% implied, closes in 14d",60,14,"yes Terence Atmane,yes Arizona,yes Purdue,yes Victoria Mboko"
+2026-03-24T04:22:32.627155Z,KXMVESPORTSMULTIGAMEEXTENDED-S202639079E4131B-8C0B2EF9D42,buy,"94% implied, closes in 14d",94,14,"yes Coby White: 2+,yes Charlotte,yes Zion Williamson: 15+,yes Karl-Anthony Towns: 15+,yes Brandon Mi"
+2026-03-24T04:22:32.627288Z,KXMVECROSSCATEGORY-S2026CE806AC6FF7-7287A7638F4,buy,"74% implied, closes in 14d",74,14,"yes New York,yes Charlotte,yes Zion Williamson: 20+,yes Jalen Brunson: 25+"
+2026-03-24T04:22:32.627386Z,KXMVECROSSCATEGORY-S202684D81B4E115-683FA4B8276,buy,"94% implied, closes in 14d",94,14,"yes Charlotte,yes Over 223.5 points scored"
+2026-03-24T04:22:32.627540Z,KXMVECROSSCATEGORY-S2026982D8307491-57AE135F9FB,buy,"62% implied, closes in 16d",62,16,"yes Houston,yes Duke,no Arizona wins by over 14.5 Points,no Nebraska wins by over 8.5 Points,yes UCo"
+2026-03-24T04:22:32.627694Z,KXMVESPORTSMULTIGAMEEXTENDED-S20261BA4F7EACB3-9C55076552A,buy,"62% implied, closes in 16d",62,16,"yes Houston,yes Arizona wins by over 2.5 Points,yes Purdue wins by over 1.5 Points,yes Over 151.5 po"
+2026-03-24T04:22:32.627795Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026E5161326FDC-20ACDAAE937,buy,"72% implied, closes in 14d",72,14,"yes Cleveland,yes Charlotte wins by over 2.5 Points,yes New Mexico"
+2026-03-24T04:26:41.067364Z,KXNBAGAME-26MAR25MIACLE-CLE,buy,"66% implied, closes in 15d",66,15,2575,1699.5,98300.5,Miami at Cleveland Winner?
+2026-03-24T04:26:41.067659Z,KXNBAGAME-26MAR25BKNGSW-GSW,buy,"86% implied, closes in 15d",86,15,2558,2199.88,96100.62,Brooklyn at Golden State Winner?
+2026-03-24T04:26:41.067989Z,KXNBAGAME-26MAR25SASMEM-SAS,buy,"92% implied, closes in 15d",92,15,2391,2199.72,93900.9,San Antonio at Memphis Winner?
+2026-03-24T04:26:41.068076Z,KXNBAGAME-26MAR25MILPOR-POR,buy,"81% implied, closes in 15d",81,15,2469,1999.89,91901.01,Milwaukee at Portland Winner?
+2026-03-24T04:26:41.068152Z,KXNBAGAME-26MAR25OKCBOS-OKC,buy,"65% implied, closes in 15d",65,15,2615,1699.75,90201.26,Oklahoma City at Boston Winner?
+2026-03-24T04:26:41.068223Z,KXNBAGAME-26MAR25DALDEN-DEN,buy,"88% implied, closes in 15d",88,15,2500,2200.0,88001.26,Dallas at Denver Winner?
+2026-03-24T04:26:41.068417Z,KXNBAGAME-26MAR25WASUTA-UTA,buy,"63% implied, closes in 15d",63,15,2698,1699.74,86301.52,Washington at Utah Winner?
+2026-03-24T04:26:41.068513Z,KXNBAGAME-26MAR25CHIPHI-PHI,buy,"63% implied, closes in 15d",63,15,2065,1300.95,85000.57,Chicago at Philadelphia Winner?
+2026-03-24T04:26:41.068662Z,KXUCLGAME-26APR08BARATM-BAR,buy,"66% implied, closes in 29d",66,29,2318,1529.88,83470.69,Barcelona vs Atletico Winner?
+2026-03-24T04:26:41.068776Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026B346AFAA912-8C648C80130,buy,"94% implied, closes in 14d",94,14,2340,2199.6,81271.09,"yes LaMelo Ball: 2+,yes DeMar DeRozan: 2+,yes Charlotte,yes LaMelo Ball: 10+"
+2026-03-24T04:26:41.068846Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026CF980FDAEB7-60A065B118E,buy,"80% implied, closes in 14d",80,14,2500,2000.0,79271.09,"yes Josh Hart: 6+,yes New York,yes Josh Hart: 15+"
+2026-03-24T04:26:41.068917Z,KXMVECROSSCATEGORY-S2026D6C4F1EAF08-CC8F302D4AD,buy,"63% implied, closes in 14d",63,14,2698,1699.74,77571.35,"yes ANA Ducks,yes NYI Islanders,yes TB Lightning,yes DAL Stars,yes NSH Predators,yes VGK Golden Knig"
+2026-03-24T04:26:41.068988Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026438CBC3A2EB-7B234E8B1C5,buy,"60% implied, closes in 14d",60,14,2833,1699.8,75871.55,"yes Charlotte,yes NYI Islanders,yes UTA Mammoth,yes BOS Bruins"
+2026-03-24T04:26:41.069082Z,KXMVESPORTSMULTIGAMEEXTENDED-S20263F185D83395-1E84547A995,buy,"65% implied, closes in 14d",65,14,2615,1699.75,74171.8,"yes NYI Islanders,yes DAL Stars,yes NSH Predators,yes BOS Bruins,yes STL Blues"
+2026-03-24T04:26:41.069144Z,KXMVECROSSCATEGORY-S2026858BD3A5A98-F09B7C92C93,buy,"67% implied, closes in 18d",67,18,2537,1699.79,72472.01,"yes Israel Adesanya,yes Niko Price,yes Maycee Barber"
+2026-03-24T04:26:41.069211Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026C8C91D01D56-86D05377A59,buy,"65% implied, closes in 14d",65,14,2615,1699.75,70772.26,"yes Tommy Paul,yes Arthur Fils,yes Iowa St."
+2026-03-24T04:26:41.069273Z,KXMVECROSSCATEGORY-S2026ABF705CBEA5-E87C90BC4C6,buy,"84% implied, closes in 14d",84,14,2380,1999.2,68773.06,"yes Cleveland,yes Josh Hart: 10+"
+2026-03-24T04:26:41.069355Z,KXMVECROSSCATEGORY-S20261039462981C-A7722748A77,buy,"63% implied, closes in 14d",63,14,2698,1699.74,67073.32,"yes New York,yes Cleveland,yes Josh Hart: 10+"
+2026-03-24T04:26:41.069429Z,KXMVESPORTSMULTIGAMEEXTENDED-S20266F610E5C2FD-1EAF52FB383,buy,"62% implied, closes in 13d",62,13,2741,1699.42,65373.9,"no Golden State wins by over 5.5 Points,no Over 223.5 points scored,no Over 229.5 points scored"
+2026-03-24T04:26:41.069542Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026A31E9A6A071-89630F0D473,buy,"65% implied, closes in 14d",65,14,2615,1699.75,63674.15,"yes Arthur Fils,yes Iowa St."
+2026-03-24T04:26:41.069641Z,KXMVECROSSCATEGORY-S2026D28C3424970-8365743494A,buy,"70% implied, closes in 14d",70,14,2857,1999.9,61674.25,"yes Jalen Brunson: 20+,yes Karl-Anthony Towns: 15+,yes Brandon Miller: 10+,yes Coby White: 10+,yes L"
+2026-03-24T04:26:41.069707Z,KXMVESPORTSMULTIGAMEEXTENDED-S20261720DCB1C9E-2082ECD184B,buy,"72% implied, closes in 14d",72,14,2777,1999.44,59674.81,"yes ANA Ducks,no Montreal wins by over 2.5 goals,no Chicago wins by over 1.5 goals,no Pittsburgh win"
+2026-03-24T04:26:41.069785Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026B6470BC2340-86DB2DA97AC,buy,"68% implied, closes in 13d",68,13,444,301.92,59372.89,"yes Portland,yes Los Angeles C,yes Over 223.5 points scored,yes Over 226.5 points scored"
+2026-03-24T04:30:03.121862Z,KXUCLGAME-26APR07SPOARS-ARS,buy,"62% implied, closes in 28d",62,28,2467,1529.54,57843.35,Sporting CP vs Arsenal Winner?
+2026-03-24T04:30:03.123134Z,KXMVECROSSCATEGORY-S20266F4955BB9CA-54D55EDDD25,buy,"88% implied, closes in 13d",88,13,2500,2200.0,55643.35,"yes Portland wins by over 29.5 Points,no Golden State wins by over 5.5 Points,yes Over 223.5 points "
+2026-03-24T04:30:03.123439Z,KXMVECROSSCATEGORY-S20261DCA86D7BD4-CA6A45A2BCC,buy,"65% implied, closes in 15d",65,15,2615,1699.75,53943.6,"yes Golden State,yes Chicago,yes Denver,yes Houston,yes Cleveland,yes Portland,yes Oklahoma City,yes"
+2026-03-24T04:30:03.123528Z,KXMVECROSSCATEGORY-S2026F50C8AF4A7D-26E89D9C938,buy,"73% implied, closes in 13d",73,13,2739,1999.47,51944.13,"yes Golden State,yes Charlotte,yes Denver,yes Los Angeles L,yes Portland,yes San Antonio,yes LSU,yes"

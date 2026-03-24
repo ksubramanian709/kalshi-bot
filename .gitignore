@@ -1,0 +1,12 @@
+# Local portfolio state (keep trades.csv tracked)
+data/portfolio.json
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Env / secrets
+.env
+*.key
