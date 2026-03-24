@@ -1,11 +1,23 @@
 """
 Kalshi API client for market data.
 No authentication required for reading markets.
+
+Env:
+  KALSHI_USE_DEMO=1 — use demo REST host (pair with demo WebSocket + demo API keys)
+  KALSHI_REST_URL — override REST base (default: production elections API)
 """
 from datetime import datetime, timezone
+import os
 import requests
 
-BASE_URL = "https://api.elections.kalshi.com/trade-api/v2"
+BASE_URL_PROD = "https://api.elections.kalshi.com/trade-api/v2"
+BASE_URL_DEMO = "https://demo-api.kalshi.co/trade-api/v2"
+
+
+def base_url() -> str:
+    if os.environ.get("KALSHI_USE_DEMO"):
+        return BASE_URL_DEMO
+    return os.environ.get("KALSHI_REST_URL", BASE_URL_PROD)
 
 
 def get_markets(limit: int = 200, status: str = "open", series_ticker: str | None = None) -> list[dict]:
@@ -13,14 +25,14 @@ def get_markets(limit: int = 200, status: str = "open", series_ticker: str | Non
     params = {"limit": limit, "status": status}
     if series_ticker:
         params["series_ticker"] = series_ticker
-    resp = requests.get(f"{BASE_URL}/markets", params=params, timeout=15)
+    resp = requests.get(f"{base_url()}/markets", params=params, timeout=15)
     resp.raise_for_status()
     return resp.json().get("markets", [])
 
 
 def get_market(ticker: str) -> dict | None:
     """Fetch a single market by ticker."""
-    resp = requests.get(f"{BASE_URL}/markets/{ticker}", timeout=10)
+    resp = requests.get(f"{base_url()}/markets/{ticker}", timeout=10)
     if resp.status_code != 200:
         return None
     return resp.json().get("market")
@@ -28,7 +40,7 @@ def get_market(ticker: str) -> dict | None:
 
 def get_orderbook(ticker: str) -> dict | None:
     """Fetch orderbook for a market."""
-    resp = requests.get(f"{BASE_URL}/markets/{ticker}/orderbook", timeout=10)
+    resp = requests.get(f"{base_url()}/markets/{ticker}/orderbook", timeout=10)
     if resp.status_code != 200:
         return None
     return resp.json()
