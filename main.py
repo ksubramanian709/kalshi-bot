@@ -14,7 +14,7 @@ import os
 import time
 
 from kalshi_auth import build_websocket_headers, websocket_auth_failure_reason
-from kalshi_client import base_url, get_market, get_markets, get_yes_probability, days_until_close
+from kalshi_client import base_url, get_all_markets, get_market, get_markets, get_yes_probability, days_until_close
 from kalshi_ws import stream_tickers, websocket_url
 from strategy import get_signal
 from portfolio import (
@@ -24,28 +24,52 @@ from portfolio import (
     settle_positions,
     compute_position_size,
     compute_unrealized_pnl,
+    print_portfolio_startup_status,
     STARTING_BALANCE,
 )
 from logger import log_signal, log_settlement
+from momentum import momentum_allows_buy, record_price_sample
 
 
+# Default universe: these series + one unfiltered page (unless KALSHI_FULL_MARKET_UNIVERSE=1)
 SERIES_TO_SCAN = ["KXNBAGAME", "KXUCLGAME", "KXUCL", None]
 
 # REST housekeeping in WebSocket mode (settlement, refresh universe, P/L print — no periodic buy scan)
 DEFAULT_HOUSEKEEPING_SEC = 300.0
 # Legacy env name still supported for poll mode full-cycle interval
 DEFAULT_POLL_INTERVAL_SEC = 60.0
+# WebSocket mode: print live portfolio value this often (uses cache + REST fallback per position)
+DEFAULT_VALUE_PRINT_SEC = 45.0
 
 TICKER_QUEUE_MAX = 10_000
 DEFAULT_TICKER_COOLDOWN_SEC = 5.0
 DEFAULT_MIN_PRICE_DELTA_CENTS = 1
 
 
+def _markets_status_for_api() -> str | None:
+    """Default ``open``. Set KALSHI_MARKETS_STATUS empty to request any status (omit param)."""
+    raw = os.environ.get("KALSHI_MARKETS_STATUS", "open")
+    return None if raw.strip() == "" else raw.strip()
+
+
+def _use_full_market_pagination() -> bool:
+    """Paginate every open market (hundreds of pages). Default off — fast series subset instead."""
+    return os.environ.get("KALSHI_FULL_MARKET_UNIVERSE", "").lower() in ("1", "true", "yes")
+
+
 def fetch_unique_markets() -> list[dict]:
-    all_markets = []
-    for series in SERIES_TO_SCAN:
-        markets = get_markets(limit=100, series_ticker=series) if series else get_markets(limit=200)
-        all_markets.extend(markets)
+    if _use_full_market_pagination():
+        all_markets = get_all_markets(status=_markets_status_for_api())
+    else:
+        print(
+            "[markets] Fast subset (SERIES_TO_SCAN + small open slice). "
+            "Export KALSHI_FULL_MARKET_UNIVERSE=1 for every open market (slow).",
+            flush=True,
+        )
+        all_markets = []
+        for series in SERIES_TO_SCAN:
+            chunk = get_markets(limit=100, series_ticker=series) if series else get_markets(limit=200)
+            all_markets.extend(chunk)
 
     seen: set[str] = set()
     unique: list[dict] = []
@@ -96,6 +120,37 @@ def _price_map_for_summary(state: dict, unique: list[dict], market_cache: dict[s
     return price_map
 
 
+def _price_map_for_open_positions(state: dict, market_cache: dict[str, dict]) -> dict[str, int]:
+    """Mark-to-market for held tickers: cache first (WS), else one REST get_market."""
+    price_map: dict[str, int] = {}
+    for p in state.get("positions", []):
+        t = p.get("ticker")
+        if not t:
+            continue
+        mkt = market_cache.get(t) or get_market(t)
+        if mkt:
+            pr = get_yes_probability(mkt)
+            if pr is not None:
+                price_map[t] = pr
+    return price_map
+
+
+def print_live_portfolio_line(state: dict, market_cache: dict[str, dict], *, tag: str = "[value]") -> None:
+    """Single-line mark-to-market using current cache (and REST for gaps)."""
+    price_map = _price_map_for_open_positions(state, market_cache)
+    unrealized, port_value = compute_unrealized_pnl(state, price_map)
+    realized = state.get("realized_pnl", 0)
+    total_pnl = realized + unrealized
+    pct = 100 * (port_value - STARTING_BALANCE) / STARTING_BALANCE if STARTING_BALANCE else 0
+    npos = len(state.get("positions", []))
+    print(
+        f"{tag} Portfolio ${port_value:,.2f} | Cash ${state.get('cash_balance', 0):,.2f} | "
+        f"P/L ${total_pnl:+,.2f} ({pct:+.2f}%) | Unreal ${unrealized:+,.2f} | Real ${realized:+,.2f} | "
+        f"Open {npos}",
+        flush=True,
+    )
+
+
 def scan_and_execute_buys(state: dict, unique: list[dict], market_cache: dict[str, dict]) -> tuple[dict, int]:
     """Full scan of universe for new positions (REST snapshot path)."""
     buy_count = 0
@@ -115,6 +170,10 @@ def scan_and_execute_buys(state: dict, unique: list[dict], market_cache: dict[st
         if signal.action != "buy" or (yes_price is not None and yes_price >= 99):
             continue
 
+        mom_ok, mom_reason = momentum_allows_buy(ticker)
+        if not mom_ok:
+            continue
+
         cost_usd, contracts = compute_position_size(state, ticker, yes_price or 60, days)
         if contracts < 1 or cost_usd <= 0:
             continue
@@ -123,7 +182,7 @@ def scan_and_execute_buys(state: dict, unique: list[dict], market_cache: dict[st
         existing_tickers.add(ticker)
 
         log_signal(
-            "buy", signal.reason, ticker,
+            "buy", f"{signal.reason}; {mom_reason}", ticker,
             yes_price=yes_price, days_to_close=days, market_title=title,
             contracts=contracts, cost_usd=cost_usd, balance_after=state["cash_balance"],
         )
@@ -156,6 +215,11 @@ def try_execute_buy_for_ticker(ticker: str, market_cache: dict[str, dict]) -> bo
     if signal.action != "buy" or (yes_price is not None and yes_price >= 99):
         return False
 
+    record_price_sample(ticker, yes_price)
+    mom_ok, mom_reason = momentum_allows_buy(ticker)
+    if not mom_ok:
+        return False
+
     cost_usd, contracts = compute_position_size(state, ticker, yes_price or 60, days)
     if contracts < 1 or cost_usd <= 0:
         return False
@@ -164,7 +228,7 @@ def try_execute_buy_for_ticker(ticker: str, market_cache: dict[str, dict]) -> bo
     save_portfolio(state)
 
     log_signal(
-        "buy", signal.reason, ticker,
+        "buy", f"{signal.reason}; {mom_reason}", ticker,
         yes_price=yes_price, days_to_close=days, market_title=title,
         contracts=contracts, cost_usd=cost_usd, balance_after=state["cash_balance"],
     )
@@ -206,6 +270,7 @@ def run_rest_cycle(
         t = m.get("ticker")
         if t:
             market_cache[t] = m
+            record_price_sample(t, get_yes_probability(market_cache[t]))
 
     buy_count = 0
     if scan_buys:
@@ -266,6 +331,8 @@ async def _ticker_event_loop(
             if yes_price is None:
                 continue
 
+            record_price_sample(ticker, yes_price)
+
             prev = last_yes_ask_cents.get(ticker)
             if prev is not None and abs(yes_price - prev) < min_delta_cents:
                 continue
@@ -292,7 +359,24 @@ async def _housekeeping_loop(
             run_rest_cycle(market_cache, universe_tickers, scan_buys=False)
 
 
-async def run_websocket_mode(housekeeping_interval: float, cooldown_sec: float, min_delta_cents: int) -> None:
+async def _live_value_loop(
+    interval_sec: float,
+    market_cache: dict[str, dict],
+    cache_lock: asyncio.Lock,
+) -> None:
+    """Periodic mark-to-market line using WS-updated cache (does not replace housekeeping)."""
+    while True:
+        await asyncio.sleep(interval_sec)
+        async with cache_lock:
+            print_live_portfolio_line(load_portfolio(), market_cache)
+
+
+async def run_websocket_mode(
+    housekeeping_interval: float,
+    cooldown_sec: float,
+    min_delta_cents: int,
+    value_print_sec: float,
+) -> None:
     headers = build_websocket_headers()
     if not headers:
         _credentials_hint()
@@ -306,19 +390,26 @@ async def run_websocket_mode(housekeeping_interval: float, cooldown_sec: float, 
     print(f"REST: {base_url()}")
     print(f"WebSocket: {websocket_url()}")
     print(
-        f"Housekeeping every {housekeeping_interval:.0f}s (settle, universe, P/L) — "
+        f"Housekeeping every {housekeeping_interval:.0f}s (settle, universe refresh) — "
         f"buys on ticker events (cooldown {cooldown_sec:.0f}s, min Δ{min_delta_cents}c ask)"
     )
+    if value_print_sec > 0:
+        print(f"Live value line every {value_print_sec:.0f}s ([value] uses WebSocket prices when available)")
+    else:
+        print("Live value line disabled (only full summary on housekeeping)")
     print("-" * 50)
 
     async with cache_lock:
         run_rest_cycle(market_cache, universe_tickers, scan_buys=True)
 
-    await asyncio.gather(
-        stream_tickers(queue, universe_tickers, build_websocket_headers),
-        _ticker_event_loop(queue, market_cache, cache_lock, cooldown_sec, min_delta_cents),
-        _housekeeping_loop(housekeeping_interval, market_cache, universe_tickers, cache_lock),
-    )
+    tasks = [
+        asyncio.create_task(stream_tickers(queue, universe_tickers, build_websocket_headers)),
+        asyncio.create_task(_ticker_event_loop(queue, market_cache, cache_lock, cooldown_sec, min_delta_cents)),
+        asyncio.create_task(_housekeeping_loop(housekeeping_interval, market_cache, universe_tickers, cache_lock)),
+    ]
+    if value_print_sec > 0:
+        tasks.append(asyncio.create_task(_live_value_loop(value_print_sec, market_cache, cache_lock)))
+    await asyncio.gather(*tasks)
 
 
 def run_poll_mode(interval: float, once: bool) -> None:
@@ -365,6 +456,15 @@ def main() -> None:
         default=int(os.environ.get("KALSHI_MIN_PRICE_DELTA_CENTS", DEFAULT_MIN_PRICE_DELTA_CENTS)),
         help="Min YES ask change (cents) to re-run strategy on a ticker (default 1)",
     )
+    p.add_argument(
+        "--value-interval",
+        type=float,
+        default=None,
+        help=(
+            "WebSocket mode: seconds between [value] portfolio lines (mark-to-market from cache). "
+            "Default 45; env KALSHI_VALUE_PRINT_SEC; use 0 to disable."
+        ),
+    )
     args = p.parse_args()
 
     if args.reset:
@@ -375,6 +475,8 @@ def main() -> None:
 
     print("Paper-trading MVP — $100k portfolio, position sizing")
     print("Strategy: Buy YES when 60-98% prob, <30 days | 2-5% per trade")
+    print_portfolio_startup_status()
+    print("State saves after each cycle / buy; only `--reset` wipes it.")
 
     if args.poll:
         interval = args.interval if args.interval is not None else float(
@@ -396,6 +498,11 @@ def main() -> None:
     hk = args.interval if args.interval is not None else float(
         os.environ.get("KALSHI_HOUSEKEEPING_SEC", os.environ.get("KALSHI_CYCLE_SEC", DEFAULT_HOUSEKEEPING_SEC))
     )
+    vprint = (
+        args.value_interval
+        if args.value_interval is not None
+        else float(os.environ.get("KALSHI_VALUE_PRINT_SEC", DEFAULT_VALUE_PRINT_SEC))
+    )
 
     try:
         asyncio.run(
@@ -403,6 +510,7 @@ def main() -> None:
                 housekeeping_interval=hk,
                 cooldown_sec=max(0.5, args.ticker_cooldown),
                 min_delta_cents=max(1, args.min_price_delta),
+                value_print_sec=vprint,
             )
         )
     except KeyboardInterrupt:

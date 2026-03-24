@@ -7,8 +7,8 @@ import os
 from datetime import datetime
 from typing import Literal
 
+from portfolio import DATA_DIR
 
-DATA_DIR = "data"
 TRADES_FILE = os.path.join(DATA_DIR, "trades.csv")
 HEADERS = [
     "timestamp", "ticker", "action", "reason", "yes_price", "days_to_close",

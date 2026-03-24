@@ -1,12 +1,17 @@
 """
 Paper portfolio: $100k starting balance, position sizing, P/L tracking.
+
+State is stored under this package's data/ directory so it persists across runs
+regardless of shell working directory. Only --reset (or deleting portfolio.json)
+starts fresh.
 """
 import json
 import os
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-DATA_DIR = "data"
+_PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(_PKG_ROOT, "data")
 PORTFOLIO_FILE = os.path.join(DATA_DIR, "portfolio.json")
 STARTING_BALANCE = 100_000.0  # dollars
 
@@ -87,6 +92,23 @@ def save_portfolio(state: dict) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(PORTFOLIO_FILE, "w") as f:
         json.dump(state, f, indent=2)
+
+
+def print_portfolio_startup_status() -> None:
+    """Tell the user whether we resumed from disk or started blank (no --reset logic here)."""
+    if not os.path.exists(PORTFOLIO_FILE):
+        print(
+            f"No saved portfolio file — starting paper cash ${STARTING_BALANCE:,.0f} "
+            f"(state will save to {PORTFOLIO_FILE})"
+        )
+        return
+    state = load_portfolio()
+    n = len(state.get("positions", []))
+    print(
+        f"Resuming saved portfolio — cash ${state['cash_balance']:,.2f}, "
+        f"{n} open position(s), trades logged: {state.get('trade_count', 0)} "
+        f"({PORTFOLIO_FILE})"
+    )
 
 
 def compute_position_size(

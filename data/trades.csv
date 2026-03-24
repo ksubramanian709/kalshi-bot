@@ -87,3 +87,18 @@ timestamp,ticker,action,reason,yes_price,days_to_close,market_title
 2026-03-24T17:13:17.770212Z,KXMVECROSSCATEGORY-S20266F4955BB9CA-54D55EDDD25,settle,"NO won, payout $0.00, P/L $-2200.00",,,2500,2200.0,51944.13,"yes Portland wins by over 29.5 Points,no Golden State wins by over 5.5 Points,ye"
 2026-03-24T17:13:18.222337Z,KXMVESPORTSMULTIGAMEEXTENDED-S2026F9BAC12A475-60FE4AAAC11,buy,"67% implied, closes in 14d",67,14,2047,1371.49,50572.64,"yes James Harden: 2+,yes Karl-Anthony Towns: 15+,yes Evan Mobley: 10+,no New Orleans wins by over 5."
 2026-03-24T17:13:18.222595Z,KXMVECROSSCATEGORY-S2026E2FE4497F02-9C47A3B24BB,buy,"70% implied, closes in 14d",70,14,2246,1572.2,49000.44,"yes Jalen Brunson: 2+,yes Josh Hart: 4+,yes Brandon Miller: 2+,yes New York,yes Charlotte,yes Zion W"
+2026-03-24T20:38:27.960552Z,KXNHLGOAL-26MAR24LACGY-LATMOORE12-3,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,46893.44,Trevor Moore: 3+ goals
+2026-03-24T20:38:27.962193Z,KXNHLGOAL-26MAR24LACGY-LATMOORE12-2,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,44786.44,Trevor Moore: 2+ goals
+2026-03-24T20:38:27.962289Z,KXNHLGOAL-26MAR24LACGY-LASHELENIUS79-1,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,42679.44,Samuel Helenius: 1+ goals
+2026-03-24T20:38:27.962357Z,KXNHLGOAL-26MAR24LACGY-LAQBYFIELD55-3,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,40572.44,Quinton Byfield: 3+ goals
+2026-03-24T20:38:27.962422Z,KXNHLGOAL-26MAR24LACGY-LAQBYFIELD55-2,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,38465.44,Quinton Byfield: 2+ goals
+2026-03-24T20:38:27.962554Z,KXNHLGOAL-26MAR24LACGY-LAMANDERSON44-1,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,2150,2107.0,36358.44,Mikey Anderson: 1+ goals
+2026-03-24T20:38:27.962614Z,KXNHLGOAL-26MAR24LACGY-LAJEDMUNDSON6-1,buy,"98% implied, closes in 14d; momentum: short history (no veto)",98,14,1763,1727.74,34630.7,Joel Edmundson: 1+ goals
+2026-03-24T20:38:27.964659Z,KXCS2MAP-26MAR25TNCSTA-2-TNC,buy,"97% implied, closes in 14d; momentum: short history (no veto)",97,14,2172,2106.84,32523.86,Will TNC win map 2 in the TNC vs. STATE match?
+2026-03-24T20:38:27.964725Z,KXCS2MAP-26MAR25TNCSTA-2-STA,buy,"97% implied, closes in 14d; momentum: short history (no veto)",97,14,2172,2106.84,30417.02,Will STATE win map 2 in the TNC vs. STATE match?
+2026-03-24T20:38:27.964788Z,KXCS2MAP-26MAR25TNCSTA-1-TNC,buy,"97% implied, closes in 14d; momentum: short history (no veto)",97,14,2172,2106.84,28310.18,Will TNC win map 1 in the TNC vs. STATE match?
+2026-03-24T20:38:27.964843Z,KXCS2MAP-26MAR25TNCSTA-1-STA,buy,"97% implied, closes in 14d; momentum: short history (no veto)",97,14,2172,2106.84,26203.34,Will STATE win map 1 in the TNC vs. STATE match?
+2026-03-24T20:38:28.007784Z,KXCS2GAME-26MAR25TNCSTA-TNC,buy,"87% implied, closes in 14d; momentum: short history (no veto)",87,14,2422,2107.14,24096.2,Will TNC win the TNC vs. STATE CS2 match?
+2026-03-24T20:38:28.007944Z,KXCS2GAME-26MAR25TNCSTA-STA,buy,"87% implied, closes in 14d; momentum: short history (no veto)",87,14,2422,2107.14,21989.06,Will STATE win the TNC vs. STATE CS2 match?
+2026-03-24T20:38:28.108651Z,KXNBA2HWINNER-26MAR25TORLAC-TOR,buy,"98% implied, closes in 15d; momentum: short history (no veto)",98,15,2150,2107.0,19882.06,Toronto vs Los Angeles C: Second Half Winner?
+2026-03-24T20:38:28.108937Z,KXNBA2HWINNER-26MAR25TORLAC-TIE,buy,"98% implied, closes in 15d; momentum: short history (no veto)",98,15,737,722.26,19159.8,Toronto vs Los Angeles C: Second Half Winner?

@@ -1,6 +1,6 @@
 # Prediction Market Paper-Trading MVP
 
-Minimal event-driven paper-trading system with **$100k mock portfolio**, position sizing, and P/L tracking.
+Minimal paper-trading system with **$100k mock portfolio**, position sizing, and P/L tracking.
 
 **No real trades.** Data only.
 
@@ -12,94 +12,152 @@ Minimal event-driven paper-trading system with **$100k mock portfolio**, positio
   - Time to close (5–21 days = full size)
   - Max 15% exposure per series (e.g. NBA)
   - 20% cash reserve
-- **P/L tracking** — Unrealized (mark-to-market) + realized (on settlement) each cycle
+- **P/L tracking** — Unrealized (mark-to-market) + realized (on settlement)
 - **No 99–100% markets** — Skips already-settled markets
+- **Default: Kalshi WebSocket** for live ticker updates (buy checks); **REST** for housekeeping (settlement, universe refresh, printed summary)
+- **Default universe: fast subset** — NBA/UCL series + a small unfiltered `open` slice (a few hundred markets, seconds to load). Set **`KALSHI_FULL_MARKET_UNIVERSE=1`** to paginate **all** open markets (can mean 100+ API pages every housekeeping — slow)
+- **NumPy momentum filter** — After base strategy passes, requires positive mean step-return over a short rolling window (see `momentum.py`)
 
 ## Strategy
 
 - **Buy YES** when implied probability 60–98% and closes within 30 days
-- Each trade uses an optimized % of portfolio
+- **Momentum gate** (when enough price samples exist): `mean(np.diff(p) / p[:-1]) > 0` on rolling implied YES; blocks buys when the series is flat or collapsing on average
+- Each trade uses a rules-based % of portfolio
 
 ## Quick Start
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python main.py              # Run continuously (every 60s)
-python main.py --once       # Run one cycle and exit
-python main.py --reset --once   # Reset to $100k and run once
 ```
+
+**WebSocket mode (default)** — needs API credentials:
+
+```bash
+export KALSHI_API_KEY_ID="your-key-id"
+export KALSHI_PRIVATE_KEY_PATH="$HOME/.config/kalshi/kalshi-private.pem"
+python main.py
+```
+
+- Buys react to **ticker WebSocket** updates (with per-ticker cooldown / min price delta).
+- **Housekeeping REST** runs periodically (default **300s**): settlement, refresh market list, full `---` summary.
+- **Live `[value]` line** (WebSocket mode, default **every 45s**): quick mark-to-market using cached prices (WebSocket when available). Set `--value-interval 30`, `KALSHI_VALUE_PRINT_SEC`, or `0` to turn off.
+- Demo API: `export KALSHI_USE_DEMO=1` (matches demo REST + WS).
+
+**REST-only (no keys):**
+
+```bash
+python main.py --poll              # full cycle + buy scan each interval (default 60s)
+python main.py --poll --once
+```
+
+**Other flags:**
+
+```bash
+python main.py --once              # one REST cycle (+ buy scan), then exit (needs keys for WS path)
+python main.py --reset             # optional: delete saved portfolio only (then next run starts $100k fresh)
+python main.py --interval 120      # poll: cycle seconds; WS: housekeeping seconds
+python main.py --ticker-cooldown 5 --min-price-delta 1   # WS buy-check throttles
+python main.py --value-interval 30    # live portfolio line every 30s (0 = off)
+```
+
+Useful env vars: `KALSHI_HOUSEKEEPING_SEC`, `KALSHI_CYCLE_SEC`, `KALSHI_MOMENTUM_*`, **`KALSHI_FULL_MARKET_UNIVERSE=1`** (slow: every open market), `KALSHI_MARKETS_STATUS`, `KALSHI_MARKETS_MAX_PAGES`, `KALSHI_MARKETS_FETCH_QUIET=1`.
+
+**Full-universe mode** re-downloads the whole paginated list on **each** housekeeping cycle (default 300s), not only on first launch — that’s why it’s opt-in.
+
+### Running in the background
+
+- **Same machine, you can close the terminal:** run detached, e.g.  
+  `nohup .venv/bin/python main.py >> bot.log 2>&1 &`  
+  (`jobs` / `fg` to manage; `kill` the PID to stop.)
+- **macOS:** `tmux` / `screen` session, or a **LaunchAgent** plist to start on login.
+- **Laptop off / asleep:** the process stops unless the OS keeps running. For 24/7 you’d use a **small cloud VPS** (or similar) where `python main.py` runs under `systemd`, `supervisord`, or Docker — the bot has no built-in “cloud mode”; it’s just a long-lived process.
+
+**First startup with full universe** can sit on `[markets] page N…` for a long time — use the **default fast subset** unless you really need every ticker.
+
+### Saving progress (default behavior)
+
+- **Normal runs do not reset anything.** Cash, open positions, realized P/L, and trade count are stored in **`data/portfolio.json`** next to the code (same path no matter which directory you run `python` from).
+- The file is **written after each housekeeping cycle and after each buy**, so stopping with Ctrl+C and starting again **resumes** where you left off.
+- **`python main.py --reset`** is the only built-in command that **deletes** `portfolio.json` on purpose (paper $100k, empty positions). Omit it to keep your progress.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `main.py` | Orchestrates fetch → strategy → position size → execute |
-| `portfolio.py` | $100k balance, position sizing, P/L, persistence |
-| `kalshi_client.py` | Kalshi API + helpers |
-| `strategy.py` | High-probability filter (60-98%, <30 days) |
-| `logger.py` | Writes to `data/trades.csv` |
+| `main.py` | Orchestrates WS + REST, strategy, sizing, momentum, persistence |
+| `portfolio.py` | $100k balance, position sizing, P/L, `portfolio.json` |
+| `kalshi_client.py` | Kalshi REST (markets); demo via `KALSHI_USE_DEMO` |
+| `kalshi_auth.py` | RSA headers for WebSocket handshake |
+| `kalshi_ws.py` | WebSocket ticker stream + reconnect |
+| `strategy.py` | Probability / time-to-close filter |
+| `momentum.py` | Rolling implied prices + NumPy momentum gate |
+| `logger.py` | Appends rows to `data/trades.csv` |
+| `ws.py` | Optional minimal WS smoke test |
 
-## Output
+## Logging
 
-- **data/trades.csv** — Every trade logged with full data (see below)
-- **data/portfolio.json** — Full state: cash, positions, total_invested
-- **Console** — Per-trade line + P/L summary each cycle
+All structured trade history goes to **`data/trades.csv`** (created automatically). **`data/portfolio.json`** is the live portfolio state (gitignored if listed in `.gitignore`).
 
-### data/trades.csv schema
+### Console
 
-| Column        | Description                                      |
-|---------------|--------------------------------------------------|
-| timestamp     | ISO 8601 UTC (e.g. 2026-03-24T04:21:47Z)         |
-| ticker        | Kalshi market ticker                             |
-| action        | `buy`, `hold`, or `settle` (when market resolves) |
-| reason        | Strategy rationale (e.g. "66% implied, closes in 15d") |
-| yes_price     | Entry price in cents (60–98)                     |
-| days_to_close | Days until market closes                          |
-| contracts     | Number of contracts bought                       |
-| cost_usd      | USD spent on the trade                           |
-| balance_after | Cash balance after the trade                     |
-| market_title  | Market description (e.g. "Miami at Cleveland Winner?") |
+- **WS mode:** `REST:` / `WebSocket:` URLs, housekeeping interval, first-cycle portfolio block, `[WS] subscribed to ticker channel`, buy lines, periodic `---` summary on housekeeping.
+- **Poll mode:** `REST polling mode`, interval, same portfolio block each cycle.
 
-**Example row:**
+### `data/trades.csv`
+
+The **`reason`** column combines strategy text and momentum diagnostics, joined with **`"; "`** when both apply:
+
+| Column | Description |
+|--------|-------------|
+| `timestamp` | ISO 8601 UTC (e.g. `2026-03-24T04:21:47Z`) |
+| `ticker` | Kalshi market ticker |
+| `action` | `buy` or `settle` (settlements use `settle`; `hold` is supported by the logger API but not written on every skipped signal) |
+| `reason` | Strategy text; **buys** append momentum status after `"; "` e.g. `66% implied, closes in 15d; momentum: ok (mean return 0.0123)` |
+| `yes_price` | Entry YES implied (cents), empty for `settle` |
+| `days_to_close` | Days until close, empty for `settle` |
+| `contracts` | Contracts bought or settled |
+| `cost_usd` | USD cost (buy) or cost basis referenced on settle row |
+| `balance_after` | Cash after the event |
+| `market_title` | Short market title |
+
+**Settlement rows** (`action=settle`): `reason` describes result, payout, and P/L; several numeric columns are left empty as in `logger.log_settlement`.
+
+**Example buy row (with momentum):**
+
 ```csv
-2026-03-24T04:21:47Z,KXNBAGAME-26MAR25MIACLE-CLE,buy,"66% implied, closes in 15d",66,15,2575,1699.50,98300.50,Miami at Cleveland Winner?
+2026-03-24T04:21:47Z,KXNBAGAME-26MAR25MIACLE-CLE,buy,"66% implied, closes in 15d; momentum: ok (mean return 0.0081)",66,15,2575,1699.50,98300.50,Miami at Cleveland Winner?
 ```
 
-### data/portfolio.json schema
+### `data/portfolio.json`
 
-| Field          | Description                    |
-|----------------|--------------------------------|
-| cash_balance   | USD remaining                  |
-| total_invested | Sum of cost_usd for all positions |
-| realized_pnl   | Realized P/L (reserved)        |
-| trade_count    | Total trades executed          |
-| positions      | Array of `{ticker, contracts, entry_price_cents, cost_usd, entry_time, market_title, series_ticker}` |
+| Field | Description |
+|-------|-------------|
+| `cash_balance` | USD remaining |
+| `total_invested` | Sum of `cost_usd` for open positions |
+| `realized_pnl` | Realized P/L |
+| `trade_count` | Total buys |
+| `positions` | `{ticker, contracts, entry_price_cents, cost_usd, entry_time, market_title, series_ticker}` |
 
-## P/L Behavior
+## P/L behavior
 
-- **Trade count** — Increments on each buy
-- **Unrealized P/L** — Mark-to-market each cycle from current Kalshi prices
-- **Realized P/L** — When a position’s market settles (status `determined`/`finalized`), we:
-  1. Check Kalshi for the result (YES or NO)
-  2. Add payout ($1 per contract if YES won) to cash
-  3. Remove the position and update realized P/L
-  4. Log a `settle` row in trades.csv
+- **Printed portfolio / unrealized** — Updated on each **housekeeping** REST cycle in WS mode (default every 300s), or every **poll** interval in `--poll` mode. Ticker stream still updates internal prices for decisions between prints.
+- **Realized P/L** — When a market settles, REST `get_market` provides result; row logged to `trades.csv`, position removed, cash updated.
 
 ## Limitations
 
-- **Paper only** — No slippage, fees, or liquidity constraints modeled
-- **No sell** — Positions are held until settlement; no paper “close” flow
-- **Kalshi rate limits** — Large scans may hit API limits
+- **Paper only** — No slippage, fees, or liquidity modeled
+- **No sell** — Held until settlement
+- **API / rate limits** — Large universes may be throttled
 
 ## Tuning
 
-Edit `portfolio.py`:
-- `BASE_POSITION_PCT` (0.02) — Base size per trade
-- `MAX_POSITION_PCT` (0.05) — Cap per trade
-- `MIN_CASH_RESERVE_PCT` (0.20) — Keep 20% in cash
-- `MAX_SERIES_EXPOSURE_PCT` (0.15) — Max in one series
+- **`portfolio.py`** — `BASE_POSITION_PCT`, `MAX_POSITION_PCT`, reserves, series cap
+- **`strategy.py`** — min/max probability, max days to close
+- **`momentum.py` / env** — window length, min samples, optional `KALSHI_MOMENTUM_REQUIRE_HISTORY=1`
 
 ## Requirements
 
 - Python 3.10+
-- `requests`, `feedparser`
+- See `requirements.txt` (`requests`, `numpy`, `websockets`, `cryptography`, `certifi`, `feedparser`, …)
