@@ -30,11 +30,18 @@ def _get_with_429_retry(
     quiet: bool = False,
     max_attempts: int = 15,
 ) -> requests.Response:
-    """GET with retries on HTTP 429 (Kalshi rate limit)."""
+    """GET with retries on HTTP 429 and transient network errors."""
     params = params or {}
     last: requests.Response | None = None
     for attempt in range(max_attempts):
-        last = requests.get(url, params=params, timeout=timeout)
+        try:
+            last = requests.get(url, params=params, timeout=timeout)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            wait = min(2.0 ** min(attempt, 7), 120.0)
+            if not quiet:
+                print(f"[kalshi] network error — {e!s:.80s}; retry in {wait:.0f}s", flush=True)
+            time.sleep(wait)
+            continue
         if last.status_code == 429:
             ra = last.headers.get("Retry-After")
             try:
@@ -130,12 +137,19 @@ def get_all_markets(
 
 
 def get_market(ticker: str) -> dict | None:
-    """Fetch a single market by ticker."""
+    """Fetch a single market by ticker.  Retries on 429 and transient network errors."""
     url = f"{base_url()}/markets/{ticker}"
     quiet = os.environ.get("KALSHI_MARKETS_FETCH_QUIET", "").lower() in ("1", "true", "yes")
     max_attempts = 15
     for attempt in range(max_attempts):
-        resp = requests.get(url, timeout=15)
+        try:
+            resp = requests.get(url, timeout=15)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            wait = min(2.0 ** min(attempt, 7), 120.0)
+            if not quiet:
+                print(f"[kalshi] get_market network error — {e!s:.80s}; retry in {wait:.0f}s", flush=True)
+            time.sleep(wait)
+            continue
         if resp.status_code == 429:
             ra = resp.headers.get("Retry-After")
             try:
@@ -204,6 +218,18 @@ def get_yes_probability(market: dict) -> int | None:
         return None
     try:
         val = float(ya)
+        return int(val * 100) if val < 2 else int(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def get_yes_bid_cents(market: dict) -> int | None:
+    """YES bid in cents for paper exits. Uses yes_bid_dollars / yes_bid."""
+    yb = market.get("yes_bid") or market.get("yes_bid_dollars")
+    if yb is None:
+        return None
+    try:
+        val = float(yb)
         return int(val * 100) if val < 2 else int(val)
     except (ValueError, TypeError):
         return None

@@ -12,6 +12,7 @@ import argparse
 import asyncio
 import os
 import time
+import logging
 
 from kalshi_auth import build_websocket_headers, websocket_auth_failure_reason
 from kalshi_client import base_url, get_all_markets, get_market, get_markets, get_yes_probability, days_until_close
@@ -22,13 +23,15 @@ from portfolio import (
     save_portfolio,
     add_position,
     settle_positions,
+    apply_stop_losses,
     compute_position_size,
     compute_unrealized_pnl,
     print_portfolio_startup_status,
     STARTING_BALANCE,
 )
-from logger import log_signal, log_settlement
-from momentum import momentum_allows_buy, record_price_sample
+from logger import log_signal, log_settlement, log_trade
+from momentum import momentum_allows_buy, record_price_sample, get_price_samples
+from technicals import technicals_allow_buy, record_technicals_if_ready
 
 
 # Default universe: these series + one unfiltered page (unless KALSHI_FULL_MARKET_UNIVERSE=1)
@@ -167,11 +170,15 @@ def scan_and_execute_buys(state: dict, unique: list[dict], market_cache: dict[st
         days = days_until_close(mkt)
         title = mkt.get("title", "")
 
-        if signal.action != "buy" or (yes_price is not None and yes_price >= 99):
+        if signal.action != "buy" or (yes_price is not None and yes_price > 85):
             continue
 
         mom_ok, mom_reason = momentum_allows_buy(ticker)
         if not mom_ok:
+            continue
+
+        tech_ok, tech_reason = technicals_allow_buy(get_price_samples(ticker))
+        if not tech_ok:
             continue
 
         cost_usd, contracts = compute_position_size(state, ticker, yes_price or 60, days)
@@ -182,7 +189,7 @@ def scan_and_execute_buys(state: dict, unique: list[dict], market_cache: dict[st
         existing_tickers.add(ticker)
 
         log_signal(
-            "buy", f"{signal.reason}; {mom_reason}", ticker,
+            "buy", f"{signal.reason}; {mom_reason}; {tech_reason}", ticker,
             yes_price=yes_price, days_to_close=days, market_title=title,
             contracts=contracts, cost_usd=cost_usd, balance_after=state["cash_balance"],
         )
@@ -212,12 +219,17 @@ def try_execute_buy_for_ticker(ticker: str, market_cache: dict[str, dict]) -> bo
     days = days_until_close(mkt)
     title = mkt.get("title", "")
 
-    if signal.action != "buy" or (yes_price is not None and yes_price >= 99):
+    if signal.action != "buy" or (yes_price is not None and yes_price > 85):
         return False
 
     record_price_sample(ticker, yes_price)
+    record_technicals_if_ready(ticker)
     mom_ok, mom_reason = momentum_allows_buy(ticker)
     if not mom_ok:
+        return False
+
+    tech_ok, tech_reason = technicals_allow_buy(get_price_samples(ticker))
+    if not tech_ok:
         return False
 
     cost_usd, contracts = compute_position_size(state, ticker, yes_price or 60, days)
@@ -228,7 +240,7 @@ def try_execute_buy_for_ticker(ticker: str, market_cache: dict[str, dict]) -> bo
     save_portfolio(state)
 
     log_signal(
-        "buy", f"{signal.reason}; {mom_reason}", ticker,
+        "buy", f"{signal.reason}; {mom_reason}; {tech_reason}", ticker,
         yes_price=yes_price, days_to_close=days, market_title=title,
         contracts=contracts, cost_usd=cost_usd, balance_after=state["cash_balance"],
     )
@@ -257,6 +269,24 @@ def run_rest_cycle(
         )
         print(f"[SETTLED] {s['ticker'][:45]} {s['result'].upper()} | P/L ${s['pnl']:+,.2f} | Cash: ${state['cash_balance']:,.2f}")
 
+    state, stopped = apply_stop_losses(state, get_market)
+    for ev in stopped:
+        log_trade(
+            "stop",
+            f"{ev['reason']} | {ev.get('stop_tag', '')} P/L ${ev['pnl']:+,.2f}",
+            ev["ticker"],
+            yes_price=ev.get("exit_price_cents"),
+            market_title=ev.get("market_title", ""),
+            contracts=ev["contracts"],
+            cost_usd=ev["cost_usd"],
+            balance_after=state["cash_balance"],
+        )
+        t_short = ev["ticker"][0:45]
+        print(
+            f"[STOP] {t_short} @ {ev['exit_price_cents']}c | P/L ${ev['pnl']:+,.2f} | Cash: ${state['cash_balance']:,.2f}",
+            flush=True,
+        )
+
     unique = fetch_unique_markets()
 
     if universe_tickers is not None:
@@ -271,6 +301,7 @@ def run_rest_cycle(
         if t:
             market_cache[t] = m
             record_price_sample(t, get_yes_probability(market_cache[t]))
+            record_technicals_if_ready(t)
 
     buy_count = 0
     if scan_buys:
@@ -287,6 +318,26 @@ def run_rest_cycle(
     print("---")
     print(f"Portfolio: ${port_value:,.2f} | Cash: ${state.get('cash_balance', 0):,.2f} | Invested: ${state['total_invested']:,.2f}")
     print(f"P/L: ${total_pnl:+,.2f} ({pct_return:+.2f}%) | Realized: ${realized:+,.2f} | Unrealized: ${unrealized:+,.2f} | Trades: {state.get('trade_count', 0)}")
+
+    positions = state.get("positions", [])
+    if positions:
+        print(f"Open positions ({len(positions)}):")
+        for p in positions:
+            t = p.get("ticker", "?")
+            title = p.get("market_title", "")[:50]
+            contracts = p.get("contracts", 0)
+            entry_c = p.get("entry_price_cents", 0)
+            cost = p.get("cost_usd", 0)
+            cur_c = price_map.get(t)
+            if cur_c is not None:
+                cur_val = contracts * (cur_c / 100.0)
+                pos_pnl = cur_val - cost
+                print(f"  {t[:45]}  {title}")
+                print(f"    {contracts} contracts @ {entry_c}c → now {cur_c}c | Cost ${cost:,.2f} → Val ${cur_val:,.2f} | P/L ${pos_pnl:+,.2f}")
+            else:
+                print(f"  {t[:45]}  {title}")
+                print(f"    {contracts} contracts @ {entry_c}c | Cost ${cost:,.2f} | (no live price)")
+
     if scan_buys and buy_count == 0:
         print("No new buys this cycle")
 
@@ -355,8 +406,11 @@ async def _housekeeping_loop(
     """Slow REST sync: settlement, universe refresh, P/L — no periodic full buy scan."""
     while True:
         await asyncio.sleep(interval)
-        async with cache_lock:
-            run_rest_cycle(market_cache, universe_tickers, scan_buys=False)
+        try:
+            async with cache_lock:
+                run_rest_cycle(market_cache, universe_tickers, scan_buys=False)
+        except Exception as e:
+            print(f"[housekeeping] error (will retry next cycle): {e}", flush=True)
 
 
 async def _live_value_loop(
@@ -367,8 +421,33 @@ async def _live_value_loop(
     """Periodic mark-to-market line using WS-updated cache (does not replace housekeeping)."""
     while True:
         await asyncio.sleep(interval_sec)
-        async with cache_lock:
-            print_live_portfolio_line(load_portfolio(), market_cache)
+        try:
+            async with cache_lock:
+                state = load_portfolio()
+                state, stopped = apply_stop_losses(
+                    state, lambda t: market_cache.get(t) or get_market(t)
+                )
+                if stopped:
+                    save_portfolio(state)
+                    for ev in stopped:
+                        log_trade(
+                            "stop",
+                            f"{ev['reason']} | {ev.get('stop_tag', '')} P/L ${ev['pnl']:+,.2f}",
+                            ev["ticker"],
+                            yes_price=ev.get("exit_price_cents"),
+                            market_title=ev.get("market_title", ""),
+                            contracts=ev["contracts"],
+                            cost_usd=ev["cost_usd"],
+                            balance_after=state["cash_balance"],
+                        )
+                        print(
+                            f"[STOP] {ev['ticker'][:45]} @ {ev['exit_price_cents']}c | "
+                            f"P/L ${ev['pnl']:+,.2f} | Cash: ${state['cash_balance']:,.2f}",
+                            flush=True,
+                        )
+                print_live_portfolio_line(load_portfolio(), market_cache)
+        except Exception as e:
+            print(f"[value] error (will retry): {e}", flush=True)
 
 
 async def run_websocket_mode(
@@ -474,7 +553,7 @@ def main() -> None:
         print("Portfolio reset to $100,000")
 
     print("Paper-trading MVP — $100k portfolio, position sizing")
-    print("Strategy: Buy YES when 60-98% prob, <30 days | 2-5% per trade")
+    print("Strategy: Buy YES when 60-85% prob, <30 days | ~1% risk/trade × Kelly | momentum + technicals")
     print_portfolio_startup_status()
     print("State saves after each cycle / buy; only `--reset` wipes it.")
 

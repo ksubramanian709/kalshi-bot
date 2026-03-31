@@ -1,5 +1,6 @@
 # Local portfolio state (keep trades.csv tracked)
 data/portfolio.json
+data/technicals/
 
 # Python
 __pycache__/

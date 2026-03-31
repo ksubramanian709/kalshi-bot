@@ -66,3 +66,11 @@ def momentum_allows_buy(ticker: str) -> tuple[bool, str]:
     if mean_ret <= 0:
         return False, f"momentum: mean return {mean_ret:.4f} <= 0 (flat/collapsing)"
     return True, f"momentum: ok (mean return {mean_ret:.4f})"
+
+
+def get_price_samples(ticker: str) -> np.ndarray | None:
+    """Implied YES probability series (0–1) for technicals. None if too short."""
+    dq = _history.get(ticker)
+    if not dq or len(dq) < 2:
+        return None
+    return np.asarray(dq, dtype=np.float64)

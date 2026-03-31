@@ -15,12 +15,16 @@ DATA_DIR = os.path.join(_PKG_ROOT, "data")
 PORTFOLIO_FILE = os.path.join(DATA_DIR, "portfolio.json")
 STARTING_BALANCE = 100_000.0  # dollars
 
-# Position sizing (multi-factor)
-BASE_POSITION_PCT = 0.02      # 2% of portfolio per trade
-MIN_POSITION_PCT = 0.005      # 0.5% minimum
-MAX_POSITION_PCT = 0.05       # 5% max per trade
+# Position sizing: 1% of portfolio (premium / max loss) × Kelly scaler from settles
+BASE_POSITION_PCT = 0.01
+MIN_POSITION_PCT = 0.0025     # 0.25% minimum after Kelly floor
+MAX_POSITION_PCT = 0.01       # 1% max per trade (premium cap)
 MIN_CASH_RESERVE_PCT = 0.20   # Keep 20% in cash
 MAX_SERIES_EXPOSURE_PCT = 0.15  # Max 15% in same series (e.g. KXNBAGAME)
+
+# Paper stop-loss: exit if unrealized loss >= this fraction of cost, OR bid drops vs entry
+STOP_LOSS_FRACTION_OF_COST = 0.15
+STOP_LOSS_CENTS_BELOW_ENTRY = 12
 
 
 @dataclass
@@ -48,28 +52,6 @@ def _series_from_ticker(ticker: str) -> str:
     if "-" in ticker:
         return ticker.split("-")[0]
     return "OTHER"
-
-
-def _probability_factor(yes_price: int) -> float:
-    """Size up for 70-90% (sweet spot), down for extremes."""
-    if yes_price >= 85:
-        return 1.1
-    if 70 <= yes_price < 85:
-        return 1.0
-    if 60 <= yes_price < 70:
-        return 0.85
-    return 0.8
-
-
-def _time_factor(days_to_close: int | None) -> float:
-    """Prefer 7-21 day horizon."""
-    if days_to_close is None:
-        return 0.9
-    if days_to_close < 5:
-        return 0.7   # Very soon = more risk
-    if 5 <= days_to_close <= 21:
-        return 1.0
-    return 0.9
 
 
 def load_portfolio() -> dict:
@@ -119,8 +101,11 @@ def compute_position_size(
 ) -> tuple[float, int]:
     """
     Compute how much to spend and how many contracts.
+    Premium (max loss) is capped at ~1% of portfolio × Kelly scaler.
     Returns (usd_to_spend, contracts).
     """
+    from kelly import compute_kelly_scaler
+
     cash = state["cash_balance"]
     total_value = cash + state["total_invested"]
     reserve = total_value * MIN_CASH_RESERVE_PCT
@@ -129,8 +114,8 @@ def compute_position_size(
     if spendable < 10:  # Min $10 per trade
         return 0.0, 0
 
-    # Base size
-    base_pct = BASE_POSITION_PCT * _probability_factor(yes_price) * _time_factor(days_to_close)
+    kelly_scaler = compute_kelly_scaler()
+    base_pct = BASE_POSITION_PCT * kelly_scaler
     base_pct = max(MIN_POSITION_PCT, min(MAX_POSITION_PCT, base_pct))
 
     usd_to_spend = total_value * base_pct
@@ -184,6 +169,98 @@ def add_position(
     state["total_invested"] = round(state["total_invested"] + cost_usd, 2)
     state["trade_count"] = state.get("trade_count", 0) + 1
     return state
+
+
+def close_position_at_price(
+    state: dict,
+    position_index: int,
+    exit_price_cents: int,
+    *,
+    reason: str,
+) -> tuple[dict, dict | None]:
+    """
+    Paper-close one open position at exit_price_cents (per contract, cents).
+    Returns (new_state, event dict or None if index invalid).
+    """
+    positions = list(state.get("positions", []))
+    if position_index < 0 or position_index >= len(positions):
+        return state, None
+    p = positions[position_index]
+    contracts = int(p.get("contracts", 0))
+    cost_usd = float(p.get("cost_usd", 0))
+    ticker = p.get("ticker", "")
+    market_title = p.get("market_title", "")
+    proceeds = contracts * (exit_price_cents / 100.0)
+    pnl = proceeds - cost_usd
+    state = state.copy()
+    state["positions"] = positions
+    state["positions"].pop(position_index)
+    state["cash_balance"] = round(state["cash_balance"] + proceeds, 2)
+    state["total_invested"] = round(state["total_invested"] - cost_usd, 2)
+    state["realized_pnl"] = round(state.get("realized_pnl", 0) + pnl, 2)
+    state["trade_count"] = state.get("trade_count", 0) + 1
+    event = {
+        "ticker": ticker,
+        "contracts": contracts,
+        "cost_usd": cost_usd,
+        "exit_price_cents": exit_price_cents,
+        "proceeds": round(proceeds, 2),
+        "pnl": round(pnl, 2),
+        "market_title": market_title,
+        "reason": reason,
+    }
+    return state, event
+
+
+def apply_stop_losses(
+    state: dict,
+    get_market_fn,
+) -> tuple[dict, list[dict]]:
+    """
+    Close positions that hit paper stop rules (bid vs entry, % of cost).
+    get_market_fn(ticker) -> market dict or None.
+    """
+    from kalshi_client import get_yes_bid_cents, get_yes_probability
+
+    closed: list[dict] = []
+    indices_to_close: list[tuple[int, int, str]] = []
+
+    positions = list(state.get("positions", []))
+    for i, p in enumerate(positions):
+        ticker = p.get("ticker")
+        if not ticker:
+            continue
+        market = get_market_fn(ticker)
+        if not market:
+            continue
+        exit_cents = get_yes_bid_cents(market)
+        if exit_cents is None:
+            exit_cents = get_yes_probability(market)
+        if exit_cents is None:
+            continue
+
+        contracts = int(p.get("contracts", 0))
+        cost_usd = float(p.get("cost_usd", 0))
+        entry_c = int(p.get("entry_price_cents", 0))
+        proceeds = contracts * (exit_cents / 100.0)
+        unrealized = proceeds - cost_usd
+
+        hit_pct = cost_usd > 0 and unrealized <= -STOP_LOSS_FRACTION_OF_COST * cost_usd
+        hit_cents = entry_c > 0 and (entry_c - exit_cents) >= STOP_LOSS_CENTS_BELOW_ENTRY
+        if hit_pct or hit_cents:
+            tag = "stop_pct" if hit_pct else "stop_cents"
+            indices_to_close.append((i, exit_cents, tag))
+
+    if not indices_to_close:
+        return state, closed
+
+    for i, exit_cents, tag in sorted(indices_to_close, key=lambda x: -x[0]):
+        state, ev = close_position_at_price(state, i, exit_cents, reason=f"paper {tag}")
+        if ev:
+            ev["stop_tag"] = tag
+            closed.append(ev)
+
+    return state, closed
 
 
 def settle_positions(state: dict, get_market_fn) -> tuple[dict, list[dict]]:

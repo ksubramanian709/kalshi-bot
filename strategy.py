@@ -16,7 +16,7 @@ class Signal:
 
 
 MIN_PROBABILITY = 60   # Only bet when implied YES >= 60%
-MAX_PROBABILITY = 98   # Skip markets already settled (99-100%)
+MAX_PROBABILITY = 85   # Cap: above this the risk/reward is terrible (risk $X to gain pennies)
 MAX_DAYS_TO_CLOSE = 30  # Only bet when market closes within 1 month
 
 

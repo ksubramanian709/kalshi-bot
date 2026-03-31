@@ -42,7 +42,7 @@ def log_settlement(ticker: str, result: str, contracts: int, cost_usd: float, pa
 
 
 def log_trade(
-    action: Literal["buy", "hold"],
+    action: Literal["buy", "hold", "stop", "sell"],
     reason: str,
     ticker: str,
     yes_price: int | None = None,
@@ -72,7 +72,7 @@ def log_trade(
 
 
 def log_signal(
-    action: Literal["buy", "hold"],
+    action: Literal["buy", "hold", "stop", "sell"],
     reason: str,
     ticker: str,
     yes_price: int | None = None,
